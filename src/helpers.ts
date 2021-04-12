@@ -76,7 +76,6 @@ export async function reportCheckResults(payload: GithubCheckPayload, todoEntrie
         summary: hasFailures
             ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
             : "No issues found.",
-        text: "Where does this go?",
         annotations: todoEntries.map(e => {
             return {
                 path: e.filePath,
@@ -92,7 +91,7 @@ export async function reportCheckResults(payload: GithubCheckPayload, todoEntrie
 export async function createCheck(head: string): Promise<GithubCheckPayload> {
     const payload: GithubCheckPayload = {
         status: "in_progress",
-        name: "Check TODOs",
+        name: "Verify TODOs",
         owner: context.repo.owner,
         repo: context.repo.repo,
         started_at: new Date().toISOString(),
