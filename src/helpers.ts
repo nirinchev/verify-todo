@@ -72,7 +72,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
 export async function reportCheckResults(payload: GithubCheckPayload, todoEntries: TodoEntry[]): Promise<void> {
     const hasFailures = todoEntries.length > 0;
     await updateCheck(payload, hasFailures ? "failure" : "success", {
-        title: "Check TODOs",
+        title: "Verify TODOs",
         summary: hasFailures
             ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
             : "No issues found.",
