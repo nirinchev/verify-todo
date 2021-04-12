@@ -73,15 +73,12 @@ function scanFile(path, pattern) {
     const patternRegex = pattern ? new RegExp(pattern, "gi") : null;
     for (let i = 0; i < contents.length; i++) {
         const line = contents[i];
-        const match = line.match(todoRegex);
-        if (line.includes("TODO")) {
-            core.info(`AAAA: ${path}:${i} - ${line} - ${match} - ${match === null || match === void 0 ? void 0 : match.groups}`);
-        }
+        const match = todoRegex.exec(line);
         if (!match || !match.groups) {
             continue;
         }
         core.info(`TODO entry found in ${path}:${i} - ${line}`);
-        const todoText = match.groups["text"];
+        const todoText = match.groups.text;
         if (todoText.match(githubRegex)) {
             continue;
         }

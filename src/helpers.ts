@@ -44,11 +44,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
     const patternRegex = pattern ? new RegExp(pattern, "gi") : null;
     for (let i = 0; i < contents.length; i++) {
         const line = contents[i];
-        const match = line.match(todoRegex);
-
-        if (line.includes("TODO")) {
-            core.info(`AAAA: ${path}:${i} - ${line} - ${match} - ${match?.groups}`);
-        }
+        const match = todoRegex.exec(line);
 
         if (!match || !match.groups) {
             continue;
@@ -56,7 +52,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
 
         core.info(`TODO entry found in ${path}:${i} - ${line}`);
 
-        const todoText = match.groups["text"];
+        const todoText = match.groups.text;
         if (todoText.match(githubRegex)) {
             continue;
         }
