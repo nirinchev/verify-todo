@@ -5,6 +5,12 @@ inputs:
     token:
         required: true
         description: "The Github token for this repository"
+    excludes:
+        required: false
+        description: A json string array specifying globs for file exclusions.
+    pattern:
+        required: false
+        description: A Regex pattern that will be matched against the TODO text. If it matches, the TODO entry will be considered valid.
 runs:
     using: "node12"
     main: "dist/index.js"

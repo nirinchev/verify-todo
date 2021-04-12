@@ -28,7 +28,9 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/github": "^4.0.0",
-    "fs": "0.0.1-security"
+    "@types/minimatch": "^3.0.4",
+    "fs": "0.0.1-security",
+    "minimatch": "^3.0.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.16",
