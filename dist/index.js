@@ -59,6 +59,7 @@ function getModifiedFiles(base, head) {
             }
             files.push(file.filename);
         }
+        core.info(`Found ${files.length} modified files.`);
         return files;
     });
 }

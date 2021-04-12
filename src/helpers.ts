@@ -28,6 +28,8 @@ export async function getModifiedFiles(base: string, head: string): Promise<stri
         files.push(file.filename);
     }
 
+    core.info(`Found ${files.length} modified files.`);
+
     return files;
 }
 
