@@ -38,10 +38,14 @@ async function run(): Promise<void> {
         await reportCheckResults(checkId, entries);
     } catch (error) {
         if (checkId) {
-            await updateCheck(checkId, "failure");
+            try {
+                await updateCheck(checkId, "failure");
+            } catch (e) {
+                core.info(`Failed to update check: ${checkId}: ${e}`);
+            }
         }
         core.setFailed(error.message);
     }
 }
 
-run();
+void run();

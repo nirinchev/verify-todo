@@ -49,7 +49,6 @@ function getModifiedFiles(base, head) {
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
         });
-        core.info(`Got response: ${response}`);
         if (response.status !== 200) {
             throw new Error(`Failed to compare commits - the Github API returned ${response.status}.`);
         }
@@ -123,6 +122,7 @@ function createCheck(head) {
             started_at: new Date().toISOString(),
             head_sha: head,
         });
+        core.info(`Created a check with Id: ${response.data.id}`);
         return response.data.id;
     });
 }
@@ -215,13 +215,18 @@ function run() {
         }
         catch (error) {
             if (checkId) {
-                yield helpers_1.updateCheck(checkId, "failure");
+                try {
+                    yield helpers_1.updateCheck(checkId, "failure");
+                }
+                catch (e) {
+                    core.info(`Failed to update check: ${checkId}: ${e}`);
+                }
             }
             core.setFailed(error.message);
         }
     });
 }
-run();
+void run();
 
 
 /***/ }),

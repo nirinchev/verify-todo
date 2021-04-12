@@ -15,8 +15,6 @@ export async function getModifiedFiles(base: string, head: string): Promise<stri
         repo: context.repo.repo,
     });
 
-    core.info(`Got response: ${response}`);
-
     if (response.status !== 200) {
         throw new Error(`Failed to compare commits - the Github API returned ${response.status}.`);
     }
@@ -94,6 +92,8 @@ export async function createCheck(head: string): Promise<number> {
         started_at: new Date().toISOString(),
         head_sha: head,
     });
+
+    core.info(`Created a check with Id: ${response.data.id}`);
 
     return response.data.id;
 }
