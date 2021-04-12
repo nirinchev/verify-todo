@@ -36,25 +36,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
+exports.updateCheck = exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
 const core = __importStar(__webpack_require__(186));
 const github_1 = __webpack_require__(438);
 const fs = __importStar(__webpack_require__(747));
 function getModifiedFiles(base, head) {
     return __awaiter(this, void 0, void 0, function* () {
         core.info(`Getting modified files between '${base}' and '${head}'`);
-        const octokit = github_1.getOctokit(core.getInput("token", { required: true }));
-        const response = yield octokit.repos.compareCommits({
-            base: base,
-            head: head,
+        const response = yield getClient().repos.compareCommits({
+            base,
+            head,
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
         });
+        core.info(`Got response: ${response}`);
         if (response.status !== 200) {
             throw new Error(`Failed to compare commits - the Github API returned ${response.status}.`);
         }
         const files = new Array();
-        for (let file of response.data.files) {
+        for (const file of response.data.files) {
             if (file.status === "removed") {
                 continue;
             }
@@ -93,37 +93,29 @@ function scanFile(path, pattern) {
 exports.scanFile = scanFile;
 function reportCheckResults(checkId, todoEntries) {
     return __awaiter(this, void 0, void 0, function* () {
-        const octokit = github_1.getOctokit(core.getInput("token", { required: true }));
         const hasFailures = todoEntries.length > 0;
-        yield octokit.checks.update({
-            check_run_id: checkId,
-            status: "completed",
-            completed_at: new Date().toISOString(),
-            conclusion: hasFailures ? "failure" : "success",
-            output: {
-                title: "Check TODOs",
-                summary: hasFailures
-                    ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
-                    : "No issues found.",
-                text: "Where does this go?",
-                annotations: todoEntries.map(e => {
-                    return {
-                        path: e.filePath,
-                        annotation_level: "warning",
-                        start_line: e.lineIndex,
-                        end_line: e.lineIndex,
-                        message: "TODO entry doesn't have a link to Github issue or Jira ticket",
-                    };
-                }),
-            },
+        yield updateCheck(checkId, hasFailures ? "failure" : "success", {
+            title: "Check TODOs",
+            summary: hasFailures
+                ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
+                : "No issues found.",
+            text: "Where does this go?",
+            annotations: todoEntries.map(e => {
+                return {
+                    path: e.filePath,
+                    annotation_level: "warning",
+                    start_line: e.lineIndex,
+                    end_line: e.lineIndex,
+                    message: "TODO entry doesn't have a link to Github issue or Jira ticket",
+                };
+            }),
         });
     });
 }
 exports.reportCheckResults = reportCheckResults;
 function createCheck(head) {
     return __awaiter(this, void 0, void 0, function* () {
-        const octokit = github_1.getOctokit(core.getInput("token", { required: true }));
-        const response = yield octokit.checks.create({
+        const response = yield getClient().checks.create({
             status: "in_progress",
             name: "Check TODOs",
             owner: github_1.context.repo.owner,
@@ -135,6 +127,21 @@ function createCheck(head) {
     });
 }
 exports.createCheck = createCheck;
+function updateCheck(checkId, conclusion, output = undefined) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield getClient().checks.update({
+            check_run_id: checkId,
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            conclusion,
+            output,
+        });
+    });
+}
+exports.updateCheck = updateCheck;
+function getClient() {
+    return github_1.getOctokit(core.getInput("token", { required: true }));
+}
 
 
 /***/ }),
@@ -179,18 +186,20 @@ const helpers_1 = __webpack_require__(8);
 function run() {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
+        let checkId;
         try {
             let files;
-            let checkId;
             switch (utils_1.context.eventName) {
                 case "pull_request":
-                    const base = (_b = (_a = utils_1.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.base) === null || _b === void 0 ? void 0 : _b.sha;
-                    const head = (_d = (_c = utils_1.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.head) === null || _d === void 0 ? void 0 : _d.sha;
-                    if (!base || !head) {
-                        throw new Error("The base and head commits are missing from the payload info.");
+                    {
+                        const base = (_b = (_a = utils_1.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.base) === null || _b === void 0 ? void 0 : _b.sha;
+                        const head = (_d = (_c = utils_1.context.payload.pull_request) === null || _c === void 0 ? void 0 : _c.head) === null || _d === void 0 ? void 0 : _d.sha;
+                        if (!base || !head) {
+                            throw new Error("The base and head commits are missing from the payload info.");
+                        }
+                        checkId = yield helpers_1.createCheck(head);
+                        files = yield helpers_1.getModifiedFiles(base, head);
                     }
-                    checkId = yield helpers_1.createCheck(head);
-                    files = yield helpers_1.getModifiedFiles(base, head);
                     break;
                 default:
                     core.info(`Event type ${utils_1.context.eventName} is not supported.`);
@@ -205,6 +214,9 @@ function run() {
             yield helpers_1.reportCheckResults(checkId, entries);
         }
         catch (error) {
+            if (checkId) {
+                yield helpers_1.updateCheck(checkId, "failure");
+            }
             core.setFailed(error.message);
         }
     });
