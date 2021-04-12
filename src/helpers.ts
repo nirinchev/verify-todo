@@ -37,7 +37,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
     const result = new Array<TodoEntry>();
     const contents = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/${path}`, "utf-8").split("\n");
 
-    core.info(`Procesing file: ${path}`);
+    core.info(`Procesing file: ${process.env.GITHUB_WORKSPACE}/${path}`);
 
     const todoRegex = /^[\W]+\/\/[\W]+TODO(?<text>.*)/gi;
     const githubRegex = /https:\/\/github.com/gm;
@@ -45,6 +45,9 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
     for (let i = 0; i < contents.length; i++) {
         const line = contents[i];
         const match = line.match(todoRegex);
+
+        core.info(`Processing ${path}:${i} - ${line}`);
+
         if (!match || !match.groups) {
             continue;
         }

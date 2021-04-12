@@ -67,13 +67,14 @@ exports.getModifiedFiles = getModifiedFiles;
 function scanFile(path, pattern) {
     const result = new Array();
     const contents = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/${path}`, "utf-8").split("\n");
-    core.info(`Procesing file: ${path}`);
+    core.info(`Procesing file: ${process.env.GITHUB_WORKSPACE}/${path}`);
     const todoRegex = /^[\W]+\/\/[\W]+TODO(?<text>.*)/gi;
     const githubRegex = /https:\/\/github.com/gm;
     const patternRegex = pattern ? new RegExp(pattern, "gi") : null;
     for (let i = 0; i < contents.length; i++) {
         const line = contents[i];
         const match = line.match(todoRegex);
+        core.info(`Processing ${path}:${i} - ${line}`);
         if (!match || !match.groups) {
             continue;
         }
