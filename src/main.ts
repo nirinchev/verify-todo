@@ -1,10 +1,11 @@
 import * as core from "@actions/core";
 import {context} from "@actions/github/lib/utils";
+import {GithubCheckPayload} from "./GithubTypes";
 import {createCheck, getModifiedFiles, reportCheckResults, scanFile, updateCheck} from "./helpers";
 import {TodoEntry} from "./TodoEntry";
 
 async function run(): Promise<void> {
-    let checkId: number | undefined;
+    let payload: GithubCheckPayload | undefined;
     try {
         let files: string[];
         switch (context.eventName) {
@@ -17,7 +18,7 @@ async function run(): Promise<void> {
                         throw new Error("The base and head commits are missing from the payload info.");
                     }
 
-                    checkId = await createCheck(head);
+                    payload = await createCheck(head);
                     files = await getModifiedFiles(base, head);
                 }
                 break;
@@ -35,13 +36,13 @@ async function run(): Promise<void> {
 
         core.info(`Found ${entries.length} issues.`);
 
-        await reportCheckResults(checkId, entries);
+        await reportCheckResults(payload, entries);
     } catch (error) {
-        if (checkId) {
+        if (payload) {
             try {
-                await updateCheck(checkId, "failure");
+                await updateCheck(payload, "failure");
             } catch (e) {
-                core.info(`Failed to update check: ${checkId}: ${e}`);
+                core.info(`Failed to update check: ${payload}: ${e}`);
             }
         }
         core.setFailed(error.message);

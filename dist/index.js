@@ -90,10 +90,10 @@ function scanFile(path, pattern) {
     return result;
 }
 exports.scanFile = scanFile;
-function reportCheckResults(checkId, todoEntries) {
+function reportCheckResults(payload, todoEntries) {
     return __awaiter(this, void 0, void 0, function* () {
         const hasFailures = todoEntries.length > 0;
-        yield updateCheck(checkId, hasFailures ? "failure" : "success", {
+        yield updateCheck(payload, hasFailures ? "failure" : "success", {
             title: "Check TODOs",
             summary: hasFailures
                 ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
@@ -114,28 +114,28 @@ function reportCheckResults(checkId, todoEntries) {
 exports.reportCheckResults = reportCheckResults;
 function createCheck(head) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield getClient().checks.create({
+        const payload = {
             status: "in_progress",
             name: "Check TODOs",
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
             started_at: new Date().toISOString(),
             head_sha: head,
-        });
+        };
+        const response = yield getClient().checks.create(payload);
         core.info(`Created a check with Id: ${response.data.id}`);
-        return response.data.id;
+        payload.check_run_id = response.data.id;
+        return payload;
     });
 }
 exports.createCheck = createCheck;
-function updateCheck(checkId, conclusion, output = undefined) {
+function updateCheck(payload, conclusion, output) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield getClient().checks.update({
-            check_run_id: checkId,
-            status: "completed",
-            completed_at: new Date().toISOString(),
-            conclusion,
-            output,
-        });
+        payload.status = "completed";
+        payload.completed_at = new Date().toISOString();
+        payload.conclusion = conclusion;
+        payload.output = output;
+        yield getClient().checks.update(payload);
     });
 }
 exports.updateCheck = updateCheck;
@@ -186,7 +186,7 @@ const helpers_1 = __webpack_require__(8);
 function run() {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
-        let checkId;
+        let payload;
         try {
             let files;
             switch (utils_1.context.eventName) {
@@ -197,7 +197,7 @@ function run() {
                         if (!base || !head) {
                             throw new Error("The base and head commits are missing from the payload info.");
                         }
-                        checkId = yield helpers_1.createCheck(head);
+                        payload = yield helpers_1.createCheck(head);
                         files = yield helpers_1.getModifiedFiles(base, head);
                     }
                     break;
@@ -211,15 +211,15 @@ function run() {
                 entries.push(...helpers_1.scanFile(file, pattern));
             }
             core.info(`Found ${entries.length} issues.`);
-            yield helpers_1.reportCheckResults(checkId, entries);
+            yield helpers_1.reportCheckResults(payload, entries);
         }
         catch (error) {
-            if (checkId) {
+            if (payload) {
                 try {
-                    yield helpers_1.updateCheck(checkId, "failure");
+                    yield helpers_1.updateCheck(payload, "failure");
                 }
                 catch (e) {
-                    core.info(`Failed to update check: ${checkId}: ${e}`);
+                    core.info(`Failed to update check: ${payload}: ${e}`);
                 }
             }
             core.setFailed(error.message);

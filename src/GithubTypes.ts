@@ -13,3 +13,17 @@ export interface GithubCheckOutput {
     text: string;
     annotations: GitHubAnnotation[];
 }
+
+export interface GithubCheckPayload {
+    check_run_id?: number;
+    status: "in_progress" | "completed";
+    name: "Check TODOs";
+    owner: string;
+    repo: string;
+    started_at: string;
+    completed_at?: string;
+    head_sha: string;
+    conclusion?: "failure" | "success";
+    output?: GithubCheckOutput;
+    [key: string]: unknown;
+}

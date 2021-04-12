@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import {getOctokit, context} from "@actions/github";
 import {GitHub} from "@actions/github/lib/utils";
 import * as fs from "fs";
-import {GithubCheckOutput} from "./GithubTypes";
+import {GithubCheckOutput, GithubCheckPayload} from "./GithubTypes";
 import {TodoEntry} from "./TodoEntry";
 
 export async function getModifiedFiles(base: string, head: string): Promise<string[]> {
@@ -63,9 +63,9 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
     return result;
 }
 
-export async function reportCheckResults(checkId: number, todoEntries: TodoEntry[]): Promise<void> {
+export async function reportCheckResults(payload: GithubCheckPayload, todoEntries: TodoEntry[]): Promise<void> {
     const hasFailures = todoEntries.length > 0;
-    await updateCheck(checkId, hasFailures ? "failure" : "success", {
+    await updateCheck(payload, hasFailures ? "failure" : "success", {
         title: "Check TODOs",
         summary: hasFailures
             ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
@@ -83,33 +83,33 @@ export async function reportCheckResults(checkId: number, todoEntries: TodoEntry
     });
 }
 
-export async function createCheck(head: string): Promise<number> {
-    const response = await getClient().checks.create({
+export async function createCheck(head: string): Promise<GithubCheckPayload> {
+    const payload: GithubCheckPayload = {
         status: "in_progress",
         name: "Check TODOs",
         owner: context.repo.owner,
         repo: context.repo.repo,
         started_at: new Date().toISOString(),
         head_sha: head,
-    });
+    };
+    const response = await getClient().checks.create(payload);
 
     core.info(`Created a check with Id: ${response.data.id}`);
 
-    return response.data.id;
+    payload.check_run_id = response.data.id;
+    return payload;
 }
 
 export async function updateCheck(
-    checkId: number,
+    payload: GithubCheckPayload,
     conclusion: "failure" | "success",
-    output: GithubCheckOutput | undefined = undefined,
+    output?: GithubCheckOutput,
 ): Promise<void> {
-    await getClient().checks.update({
-        check_run_id: checkId,
-        status: "completed",
-        completed_at: new Date().toISOString(),
-        conclusion,
-        output,
-    });
+    payload.status = "completed";
+    payload.completed_at = new Date().toISOString();
+    payload.conclusion = conclusion;
+    payload.output = output;
+    await getClient().checks.update(payload);
 }
 
 function getClient(): InstanceType<typeof GitHub> {
