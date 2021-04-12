@@ -36,11 +36,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getArrayFromInput = exports.filterExcludedFiles = exports.updateCheck = exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
+exports.filterExcludedFiles = exports.updateCheck = exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
 const core = __importStar(__webpack_require__(2186));
 const github_1 = __webpack_require__(5438);
 const fs = __importStar(__webpack_require__(5747));
-const minimatch_1 = __webpack_require__(3973);
+const minimatch = __importStar(__webpack_require__(3973));
 function getModifiedFiles(base, head) {
     return __awaiter(this, void 0, void 0, function* () {
         core.info(`Getting modified files between '${base}' and '${head}'`);
@@ -143,24 +143,19 @@ function updateCheck(payload, conclusion, output) {
     });
 }
 exports.updateCheck = updateCheck;
-function filterExcludedFiles(files, exclusionGlobs) {
-    for (const glob of exclusionGlobs) {
-        files = files.filter(minimatch_1.filter(glob));
+function filterExcludedFiles(files, exclusionGlob) {
+    if (!exclusionGlob) {
+        return files;
     }
-    return files;
-}
-exports.filterExcludedFiles = filterExcludedFiles;
-function getArrayFromInput(input) {
-    if (!input) {
-        return [];
-    }
-    const result = JSON.parse(input);
-    if (!Array.isArray(result)) {
-        throw new Error(`Expected ${input} to be JSON array, but it wasn't.`);
+    const result = new Array();
+    for (const file of files) {
+        if (!minimatch.default(file, exclusionGlob, { nocase: true })) {
+            result.push(file);
+        }
     }
     return result;
 }
-exports.getArrayFromInput = getArrayFromInput;
+exports.filterExcludedFiles = filterExcludedFiles;
 function getClient() {
     return github_1.getOctokit(core.getInput("token", { required: true }));
 }
@@ -228,9 +223,9 @@ function run() {
                     return;
             }
             const pattern = core.getInput("pattern", { required: false });
-            const excludes = helpers_1.getArrayFromInput(core.getInput("excludes", { required: false }));
+            const filteredFiles = helpers_1.filterExcludedFiles(files, core.getInput("excludes", { required: false }));
             const entries = new Array();
-            for (const file of helpers_1.filterExcludedFiles(files, excludes)) {
+            for (const file of filteredFiles) {
                 entries.push(...helpers_1.scanFile(file, pattern));
             }
             core.info(`Found ${entries.length} issues.`);

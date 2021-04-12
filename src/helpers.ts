@@ -4,7 +4,7 @@ import {GitHub} from "@actions/github/lib/utils";
 import * as fs from "fs";
 import {GithubCheckOutput, GithubCheckPayload} from "./GithubTypes";
 import {TodoEntry} from "./TodoEntry";
-import {filter} from "minimatch";
+import * as minimatch from "minimatch";
 
 export async function getModifiedFiles(base: string, head: string): Promise<string[]> {
     core.info(`Getting modified files between '${base}' and '${head}'`);
@@ -120,22 +120,17 @@ export async function updateCheck(
     await getClient().checks.update(payload);
 }
 
-export function filterExcludedFiles(files: string[], exclusionGlobs: string[]): string[] {
-    for (const glob of exclusionGlobs) {
-        files = files.filter(filter(glob));
+export function filterExcludedFiles(files: string[], exclusionGlob: string): string[] {
+    if (!exclusionGlob) {
+        return files;
     }
 
-    return files;
-}
+    const result = new Array<string>();
 
-export function getArrayFromInput(input: string | undefined): string[] {
-    if (!input) {
-        return [];
-    }
-
-    const result = JSON.parse(input);
-    if (!Array.isArray(result)) {
-        throw new Error(`Expected ${input} to be JSON array, but it wasn't.`);
+    for (const file of files) {
+        if (!minimatch.default(file, exclusionGlob, {nocase: true})) {
+            result.push(file);
+        }
     }
 
     return result;

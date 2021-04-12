@@ -22,4 +22,4 @@ jobs:
             - uses: ./
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
-                  excludes: '["__tests__/**", "dist/**"]'
+                  excludes: "?(__tests__|dist)/**"
