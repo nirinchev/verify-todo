@@ -51,8 +51,6 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
             continue;
         }
 
-        core.info(`TODO entry found in ${path}:${i} - ${line}`);
-
         const todoText = match.groups.text;
         if (todoText.match(githubRegex)) {
             continue;
@@ -63,7 +61,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
         }
 
         result.push({
-            lineIndex: i,
+            lineIndex: i + 1,
             filePath: path,
         });
     }
@@ -120,17 +118,15 @@ export async function updateCheck(
     await getClient().checks.update(payload);
 }
 
-export function filterExcludedFiles(files: string[], exclusionGlob: string): string[] {
-    if (!exclusionGlob) {
-        return files;
-    }
-
+export function filterFiles(files: string[], exclusionGlob: string, inclusionGlob = "**/*"): string[] {
     const result = new Array<string>();
 
-    for (const file of files) {
-        if (!minimatch.default(file, exclusionGlob, {nocase: true})) {
-            result.push(file);
+    for (const file of files.filter(minimatch.filter(inclusionGlob))) {
+        if (exclusionGlob && minimatch.default(file, exclusionGlob, {nocase: true})) {
+            continue;
         }
+
+        result.push(file);
     }
 
     return result;

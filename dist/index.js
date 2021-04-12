@@ -36,7 +36,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.filterExcludedFiles = exports.updateCheck = exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
+exports.filterFiles = exports.updateCheck = exports.createCheck = exports.reportCheckResults = exports.scanFile = exports.getModifiedFiles = void 0;
 const core = __importStar(__webpack_require__(2186));
 const github_1 = __webpack_require__(5438);
 const fs = __importStar(__webpack_require__(5747));
@@ -78,7 +78,6 @@ function scanFile(path, pattern) {
         if (!match || !match.groups) {
             continue;
         }
-        core.info(`TODO entry found in ${path}:${i} - ${line}`);
         const todoText = match.groups.text;
         if (todoText.match(githubRegex)) {
             continue;
@@ -87,7 +86,7 @@ function scanFile(path, pattern) {
             continue;
         }
         result.push({
-            lineIndex: i,
+            lineIndex: i + 1,
             filePath: path,
         });
     }
@@ -143,19 +142,17 @@ function updateCheck(payload, conclusion, output) {
     });
 }
 exports.updateCheck = updateCheck;
-function filterExcludedFiles(files, exclusionGlob) {
-    if (!exclusionGlob) {
-        return files;
-    }
+function filterFiles(files, exclusionGlob, inclusionGlob = "**/*") {
     const result = new Array();
-    for (const file of files) {
-        if (!minimatch.default(file, exclusionGlob, { nocase: true })) {
-            result.push(file);
+    for (const file of files.filter(minimatch.filter(inclusionGlob))) {
+        if (exclusionGlob && minimatch.default(file, exclusionGlob, { nocase: true })) {
+            continue;
         }
+        result.push(file);
     }
     return result;
 }
-exports.filterExcludedFiles = filterExcludedFiles;
+exports.filterFiles = filterFiles;
 function getClient() {
     return github_1.getOctokit(core.getInput("token", { required: true }));
 }
@@ -223,7 +220,9 @@ function run() {
                     return;
             }
             const pattern = core.getInput("pattern", { required: false });
-            const filteredFiles = helpers_1.filterExcludedFiles(files, core.getInput("excludes", { required: false }));
+            const excludePattern = core.getInput("exclude", { required: false });
+            const includePattern = core.getInput("include", { required: false });
+            const filteredFiles = helpers_1.filterFiles(files, excludePattern, includePattern);
             const entries = new Array();
             for (const file of filteredFiles) {
                 entries.push(...helpers_1.scanFile(file, pattern));

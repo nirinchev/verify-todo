@@ -1,26 +1,36 @@
 import * as fs from "fs";
 import path from "path";
 import * as tmp from "tmp";
-import {filterExcludedFiles, scanFile} from "../src/helpers";
+import {filterFiles, scanFile} from "../src/helpers";
 import {expect} from "chai";
 
-const testCases: {
-    content: string;
-    expectedMatches: number[];
-    description: string;
-}[] = [
-    {
-        content: "// TODO: foo bar",
-        expectedMatches: [0],
-        description: "// TODO",
-    },
-];
-
 describe("scanFile", () => {
+    const testCases: {
+        content: string;
+        expectedMatches: number[];
+        description: string;
+    }[] = [
+        {
+            content: "// TODO: foo bar",
+            expectedMatches: [1],
+            description: "// TODO",
+        },
+        {
+            content: "# TODO blah blah",
+            expectedMatches: [],
+            description: "# TODO",
+        },
+        {
+            content: "",
+            expectedMatches: [],
+            description: "empty string",
+        },
+    ];
+
     const tmpDir = tmp.dirSync().name;
     process.env.GITHUB_WORKSPACE = tmpDir;
     for (const tc of testCases) {
-        it(`scanFile: ${tc.description}`, () => {
+        it(`${tc.description}`, () => {
             const tempFile = path.basename(tmp.tmpNameSync());
             fs.writeFileSync(`${tmpDir}/${tempFile}`, tc.content);
 
@@ -32,10 +42,75 @@ describe("scanFile", () => {
 });
 
 describe("filterFiles", () => {
-    it("filters correctly", () => {
+    describe("removes excluded file", () => {
         const files = ["README.md", "foo.ts", "__tests__/foo.ts", "dist/index.js"];
-        const glob = "?(__tests__|dist)/**";
-        const result = filterExcludedFiles(files, glob);
-        expect(result).to.have.members(["README.md", "foo.ts"]);
+        const testCases: {
+            glob: string;
+            expected: string[];
+        }[] = [
+            {
+                glob: "?(__tests__|dist)/**",
+                expected: ["README.md", "foo.ts"],
+            },
+            {
+                glob: "**/*",
+                expected: [],
+            },
+            {
+                glob: "foo.ts",
+                expected: ["README.md", "__tests__/foo.ts", "dist/index.js"],
+            },
+            {
+                glob: "**/foo.ts",
+                expected: ["README.md", "dist/index.js"],
+            },
+            {
+                glob: "**/*.+(js|md)",
+                expected: ["foo.ts", "__tests__/foo.ts"],
+            },
+        ];
+
+        for (const tc of testCases) {
+            it(`with pattern '${tc.glob}'`, () => {
+                const result = filterFiles(files, tc.glob);
+                expect(result).to.have.members(tc.expected);
+            });
+        }
+    });
+
+    describe("removes non-included files", () => {
+        const files = ["README.md", "foo.ts", "__tests__/foo.ts", "dist/index.js"];
+        const testCases: {
+            glob: string;
+            expected: string[];
+        }[] = [
+            {
+                glob: "?(__tests__|dist)/**",
+                expected: ["__tests__/foo.ts", "dist/index.js"],
+            },
+            {
+                glob: "**/*",
+                expected: ["README.md", "foo.ts", "__tests__/foo.ts", "dist/index.js"],
+            },
+            {
+                glob: "foo.ts",
+                expected: ["foo.ts"],
+            },
+            {
+                glob: "**/foo.ts",
+                expected: ["foo.ts", "__tests__/foo.ts"],
+            },
+            {
+                glob: "**/*.+(js|md)",
+                expected: ["README.md", "dist/index.js"],
+            },
+        ];
+
+        for (const tc of testCases) {
+            it(`with pattern '${tc.glob}'`, () => {
+                const result = filterFiles(files, "", tc.glob);
+                expect(result).to.have.members(tc.expected);
+            });
+        }
     });
 });

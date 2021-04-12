@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import {context} from "@actions/github/lib/utils";
 import {GithubCheckPayload} from "./GithubTypes";
-import {createCheck, filterExcludedFiles, getModifiedFiles, reportCheckResults, scanFile, updateCheck} from "./helpers";
+import {createCheck, filterFiles, getModifiedFiles, reportCheckResults, scanFile, updateCheck} from "./helpers";
 import {TodoEntry} from "./TodoEntry";
 
 async function run(): Promise<void> {
@@ -28,7 +28,10 @@ async function run(): Promise<void> {
         }
 
         const pattern = core.getInput("pattern", {required: false});
-        const filteredFiles = filterExcludedFiles(files, core.getInput("excludes", {required: false}));
+        const excludePattern = core.getInput("exclude", {required: false});
+        const includePattern = core.getInput("include", {required: false});
+
+        const filteredFiles = filterFiles(files, excludePattern, includePattern);
 
         const entries = new Array<TodoEntry>();
         for (const file of filteredFiles) {
