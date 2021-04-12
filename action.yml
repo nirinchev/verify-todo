@@ -1,11 +1,20 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: "Your name here"
+description: "Provide a description here"
+author: "Your name or organization here"
 inputs:
-  milliseconds: # change this
-    required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    token:
+        required: true
+        description: The Github token for this repository.
+    exclude:
+        required: false
+        description: A glob specifying a pattern for excluding files from processing.
+    include:
+        required: false
+        description: A glob specifying a pattern for including files to process.
+        default: "**/*"
+    pattern:
+        required: false
+        description: A Regex pattern that will be matched against the TODO text. If it matches, the TODO entry will be considered valid.
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+    using: "node12"
+    main: "dist/index.js"
