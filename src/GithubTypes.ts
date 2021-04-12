@@ -10,7 +10,7 @@ export interface GitHubAnnotation {
 export interface GithubCheckOutput {
     title: string;
     summary: string;
-    text: string;
+    text?: string;
     annotations: GitHubAnnotation[];
 }
 
