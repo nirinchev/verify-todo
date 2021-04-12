@@ -1,6 +1,6 @@
-name: "Your name here"
-description: "Provide a description here"
-author: "Your name or organization here"
+name: "TODOs have links"
+description: "Verifies that TODOs in your codebase have a link to a follow-up issue."
+author: "Nikola Irinchev"
 inputs:
     token:
         required: true
