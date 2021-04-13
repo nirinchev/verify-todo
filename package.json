@@ -38,7 +38,7 @@
     "@types/mocha": "^8.2.2",
     "@types/node": "^14.14.9",
     "@types/tmp": "^0.2.0",
-    "@typescript-eslint/parser": "^4.8.1",
+    "@typescript-eslint/parser": "^4.22.0",
     "@vercel/ncc": "^0.25.1",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
