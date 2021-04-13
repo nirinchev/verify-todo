@@ -97,11 +97,10 @@ function reportCheckResults(payload, todoEntries) {
     return __awaiter(this, void 0, void 0, function* () {
         const hasFailures = todoEntries.length > 0;
         yield updateCheck(payload, hasFailures ? "failure" : "success", {
-            title: "Check TODOs",
+            title: "Verify TODOs",
             summary: hasFailures
                 ? `Found ${todoEntries.length} TODO entries that don't have a link to a Github issue/Jira ticket.`
                 : "No issues found.",
-            text: "Where does this go?",
             annotations: todoEntries.map(e => {
                 return {
                     path: e.filePath,
@@ -119,7 +118,7 @@ function createCheck(head) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = {
             status: "in_progress",
-            name: "Check TODOs",
+            name: "Verify TODOs",
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
             started_at: new Date().toISOString(),
