@@ -35,7 +35,7 @@
     "devDependencies": {
         "@types/chai": "^4.2.18",
         "@types/chai-as-promised": "^7.1.4",
-        "@types/mocha": "^8.2.2",
+        "@types/mocha": "^10.0.1",
         "@types/node": "^15.12.2",
         "@types/tmp": "^0.2.3",
         "@typescript-eslint/parser": "^5.56.0",
