@@ -40,7 +40,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
 
     core.info(`Procesing file: ${process.env.GITHUB_WORKSPACE}/${path}`);
 
-    const todoRegex = /\/\/[\W]*TODO(?<text>.*)/gi;
+    const todoRegex = /\/\/[\W]*TODO[:]?[\W]*(?<text>.*)/gi;
     const githubRegex = /https:\/\/github.com/gm;
     const patternRegex = pattern ? new RegExp(pattern, "gi") : null;
     for (let i = 0; i < contents.length; i++) {
@@ -63,6 +63,7 @@ export function scanFile(path: string, pattern: string | undefined): TodoEntry[]
         result.push({
             lineIndex: i + 1,
             filePath: path,
+            message: todoText,
         });
     }
 
@@ -82,7 +83,7 @@ export async function reportCheckResults(payload: GithubCheckPayload, todoEntrie
                 annotation_level: "warning",
                 start_line: e.lineIndex,
                 end_line: e.lineIndex,
-                message: "TODO entry doesn't have a link to Github issue or Jira ticket",
+                message: `TODO entry doesn't have a link to Github issue or Jira ticket\n${e.message}`,
             };
         }),
     });

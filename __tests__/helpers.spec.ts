@@ -9,21 +9,25 @@ describe("scanFile", () => {
         content: string;
         expectedMatches: number[];
         description: string;
+        expectedMessages: string[];
     }[] = [
         {
             content: "// TODO: foo bar",
             expectedMatches: [1],
             description: "// TODO",
+            expectedMessages: ["foo bar"],
         },
         {
             content: "# TODO blah blah",
             expectedMatches: [],
             description: "# TODO",
+            expectedMessages: [],
         },
         {
             content: "",
             expectedMatches: [],
             description: "empty string",
+            expectedMessages: [],
         },
     ];
 
