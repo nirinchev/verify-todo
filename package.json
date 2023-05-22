@@ -30,7 +30,7 @@
         "@actions/github": "^4.0.0",
         "@types/minimatch": "^5.1.2",
         "fs": "0.0.1-security",
-        "minimatch": "^7.4.2"
+        "minimatch": "^9.0.1"
     },
     "devDependencies": {
         "@types/chai": "^4.2.18",
